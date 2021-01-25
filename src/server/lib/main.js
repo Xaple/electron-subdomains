@@ -1,31 +1,35 @@
 import { query } from "./query";
+import { load } from "./load";
+import { portscan } from "./portscan";
 import * as async from "async";
-import * as fs from "fs";
-import * as path from "path";
 
-export var main = function(domain, callback) {
+export var main = function(domain, ports, callback) {
   async.waterfall([
     function(callback) {
-      let filePath = path.join(__dirname, "../../../dic.txt");
-      let dictionary = fs
-        .readFileSync(filePath)
-        .toString()
-        .trim()
-        .split(/\r?\n/g);
-      callback(null, dictionary);
+      load((err, res) => {
+        callback(null, res);
+      });
     },
     function(dictionary) {
       async.mapSeries(
         dictionary,
         (item, next) => {
           query(item + "." + domain, (err, result) => {
-            next();
-            callback(null, result);
+            if (result) {
+              portscan(result.address, ports, (err, res) => {
+                result.ports = res;
+                callback(null, result);
+                next();
+              });
+            } else {
+              callback(null, result);
+              next();
+            }
           });
+        },
+        () => {
+          callback(null, { code: 0 });
         }
-        // (err, results) => {
-        //   //   console.log(results);
-        // }
       );
     }
   ]);

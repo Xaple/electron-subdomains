@@ -5,7 +5,7 @@ export var query = async function(subdomain, callback) {
     if (err) {
       callback(null, null);
     } else {
-      let result = { domain: subdomain, address: address.toString() };
+      let result = { code: 1, domain: subdomain, address: address.toString() };
       callback(null, result);
     }
   });
